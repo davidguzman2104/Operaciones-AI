@@ -88,6 +88,16 @@
                   <textarea id="instruccion" class="form-control" rows="3" placeholder="Ej.: suma 23 y 12" required></textarea>
                   <div class="invalid-feedback">Escribe una instrucción.</div>
                 </div>
+                <div class="row g-3">
+               <div class="col-md-6">
+            <label for="operandoA" class="form-label">Operando A (opcional)</label>
+            <input id="operandoA" type="number" step="any" class="form-control" placeholder="Ej.: 45" />
+            </div>
+            <div class="col-md-6">
+            <label for="operandoB" class="form-label">Operando B (opcional)</label>
+            <input id="operandoB" type="number" step="any" class="form-control" placeholder="Ej.: 15" />
+            </div>
+                </div>
 
                 <div class="mb-3">
                   <label for="webhookUrl" class="form-label">URL del Webhook n8n</label>
@@ -203,4 +213,3 @@
     <script src="./app.js"></script>
   </body>
 </html>
-
