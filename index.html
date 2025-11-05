@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="es" data-bs-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Operaciones AI · n8n + OpenAI</title>
+
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- Bootstrap Icons -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-secondary">
+      <div class="container">
+        <a class="navbar-brand fw-semibold" href="#">
+          <i class="bi bi-cpu me-2"></i>Operaciones AI
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navCollapse">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navCollapse">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <button class="btn btn-outline-light btn-sm" data-bs-toggle="modal" data-bs-target="#ayudaModal">
+                <i class="bi bi-question-circle me-1"></i>Ayuda
+              </button>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <!-- HERO -->
+    <header class="py-5 bg-primary bg-gradient">
+      <div class="container">
+        <div class="row align-items-center g-4">
+          <div class="col-lg-7">
+            <h1 class="display-6 text-white fw-bold mb-3">
+              Convierte texto en operaciones y regístralas en Google Sheets
+            </h1>
+            <p class="lead text-white-50 mb-0">
+              Escribe: <em>“suma 23 y 12”</em>, <em>“56 - 23 + 12”</em>, <em>“multiplica 7 por 8”</em>.
+              La app obtiene tu IP pública y envía todo al Webhook de n8n.
+            </p>
+          </div>
+          <div class="col-lg-5">
+            <div class="card shadow-lg border-0">
+              <div class="card-body">
+                <div class="d-flex align-items-center">
+                  <div class="avatar bg-primary-subtle rounded-circle d-flex align-items-center justify-content-center me-3" style="width:48px;height:48px;">
+                    <i class="bi bi-diagram-3 fs-4 text-primary"></i>
+                  </div>
+                  <div>
+                    <div class="fw-semibold">Flujo n8n</div>
+                    <div class="text-body-secondary small">Webhook → OpenAI → Sheets → Respuesta</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>          
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN -->
+    <main class="container my-5">
+      <div class="row g-4">
+        <div class="col-lg-7">
+          <div class="card shadow-sm border-0">
+            <div class="card-header bg-white">
+              <div class="d-flex align-items-center">
+                <i class="bi bi-magic me-2 text-primary"></i>
+                <span class="fw-semibold">Instrucción en lenguaje natural</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <form id="form-operacion" class="needs-validation" novalidate>
+                <div class="mb-3">
+                  <label for="instruccion" class="form-label">Instrucción</label>
+                  <textarea id="instruccion" class="form-control" rows="3" placeholder="Ej.: suma 23 y 12" required></textarea>
+                  <div class="invalid-feedback">Escribe una instrucción.</div>
+                </div>
+
+                <div class="mb-3">
+                  <label for="webhookUrl" class="form-label">URL del Webhook n8n</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+                    <input type="url" id="webhookUrl" class="form-control" placeholder="https://TU-INSTANCE.app.n8n.cloud/webhook/operacion-ai" required />
+                    <button class="btn btn-outline-secondary" type="button" id="btnProbar">
+                      <i class="bi bi-lightning-charge"></i>
+                    </button>
+                  </div>
+                  <div class="form-text">Usa la URL de producción del Webhook.</div>
+                  <div class="invalid-feedback">Pega la URL del Webhook.</div>
+                </div>
+
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label">IP Pública (auto)</label>
+                    <input id="ipPreview" class="form-control" placeholder="Detectando..." disabled />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Timestamp</label>
+                    <input id="tsPreview" class="form-control" disabled />
+                  </div>
+                </div>
+
+                <div class="d-grid d-sm-flex gap-2 mt-4">
+                  <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-send-fill me-1"></i>Enviar a n8n
+                  </button>
+                  <button type="reset" class="btn btn-outline-secondary">
+                    <i class="bi bi-eraser me-1"></i>Limpiar
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div class="card mt-4 shadow-sm border-0">
+            <div class="card-header bg-white">
+              <div class="d-flex align-items-center">
+                <i class="bi bi-terminal me-2 text-success"></i>
+                <span class="fw-semibold">Respuesta del Webhook</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <pre id="respuesta" class="mb-0" style="min-height: 120px;"></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-5">
+          <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white">
+              <div class="d-flex align-items-center">
+                <i class="bi bi-check2-square me-2 text-info"></i>
+                <span class="fw-semibold">Checklist rápido</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <ol class="mb-0">
+                <li>Publica esta página en <strong>GitHub Pages</strong>.</li>
+                <li>En n8n, habilita el <strong>Webhook (POST)</strong>.</li>
+                <li>Agrega nodo <strong>OpenAI</strong> para parsear y calcular.</li>
+                <li>Agrega nodo <strong>Google Sheets → Append</strong>.</li>
+                <li>Verifica datos en la hoja: IP, A, B, operación, resultado, timestamp.</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="py-4 bg-light border-top">
+      <div class="container small text-center text-body-secondary">
+        Hecho con <i class="bi bi-bootstrap-fill"></i> Bootstrap · n8n · OpenAI
+      </div>
+    </footer>
+
+    <!-- TOASTS -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080">
+      <div id="toastEstado" class="toast align-items-center text-bg-dark border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+          <div class="toast-body" id="toastMsg">Listo.</div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL AYUDA -->
+    <div class="modal fade" id="ayudaModal" tabindex="-1">
+      <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title"><i class="bi bi-info-circle me-2"></i>Ayuda rápida</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <p>1) Copia la URL del Webhook de n8n (producción) y pégala en el campo.</p>
+            <p>2) Escribe una instrucción como “56 - 23 + 12”.</p>
+            <p>3) Envía; verás el JSON de respuesta y tus datos quedarán en Google Sheets.</p>
+            <p class="mb-0">La IP pública se obtiene desde <code>api.ipify.org</code>.</p>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-primary" data-bs-dismiss="modal">Entendido</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS + App -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
