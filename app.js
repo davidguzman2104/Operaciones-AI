@@ -78,33 +78,48 @@
   });
 
   // Enviar instrucción
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    if (!form.checkValidity()) return;
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!form.checkValidity()) return;
 
-    respuestaEl.textContent = "";
-    showToast("Obteniendo IP pública…");
-    const ip = await obtenerIPPublica();
-    ipPreview.value = ip || "No disponible";
-    tsPreview.value = nowISO();
+  respuestaEl.textContent = "";
+  showToast("Obteniendo IP pública…");
+  const ip = await obtenerIPPublica();
+  ipPreview.value = ip || "No disponible";
+  tsPreview.value = nowISO();
 
-    const instruccion = document.getElementById("instruccion").value.trim();
-    const webhookUrl = document.getElementById("webhookUrl").value.trim();
+  const instruccion = document.getElementById("instruccion").value.trim();
+  const webhookUrl = document.getElementById("webhookUrl").value.trim();
 
-    const v = validarWebhookUrl(webhookUrl);
-    if (!v.ok) { showToast(v.msg); return; }
+  // NUEVO: leer A y B (si se llenaron)
+  const aStr = document.getElementById("operandoA").value.trim();
+  const bStr = document.getElementById("operandoB").value.trim();
+  const aNum = aStr === "" ? undefined : Number(aStr);
+  const bNum = bStr === "" ? undefined : Number(bStr);
 
-    showToast("Enviando datos a n8n…");
-    try {
-      const payload = { instruccion, ip_publica: ip, ts: tsPreview.value };
-      const res = await postJSON(webhookUrl, payload);
-      respuestaEl.textContent = JSON.stringify(res, null, 2);
-      showToast(`Listo. Estatus ${res.status}.`);
-    } catch (err) {
-      respuestaEl.textContent = String(err);
-      showToast("Error al llamar al Webhook.");
-    }
-  });
+  const v = validarWebhookUrl(webhookUrl);
+  if (!v.ok) { showToast(v.msg); return; }
+
+  showToast("Enviando datos a n8n…");
+  try {
+    const payload = {
+      instruccion,
+      ip_publica: ip,
+      ts: tsPreview.value,
+      // Sólo incluye A/B si son números válidos
+      ...(Number.isFinite(aNum) ? { a: aNum } : {}),
+      ...(Number.isFinite(bNum) ? { b: bNum } : {}),
+    };
+
+    const res = await postJSON(webhookUrl, payload);
+    respuestaEl.textContent = JSON.stringify(res, null, 2);
+    showToast(`Listo. Estatus ${res.status}.`);
+  } catch (err) {
+    respuestaEl.textContent = String(err);
+    showToast("Error al llamar al Webhook.");
+  }
+});
+
 
   // Init
   previewData();
