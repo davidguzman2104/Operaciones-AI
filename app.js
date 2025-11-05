@@ -8,39 +8,55 @@
   const toast = new bootstrap.Toast(toastEl, { delay: 2500 });
   const toastMsg = document.getElementById("toastMsg");
 
-  function showToast(msg) {
-    toastMsg.textContent = msg;
-    toast.show();
-  }
+  function showToast(msg) { toastMsg.textContent = msg; toast.show(); }
 
   async function obtenerIPPublica() {
     try {
       const res = await fetch("https://api.ipify.org?format=json");
       const data = await res.json();
       return data.ip || null;
-    } catch {
-      return null;
-    }
+    } catch { return null; }
   }
 
-  function nowISO() {
-    return new Date().toISOString();
-  }
+  function nowISO() { return new Date().toISOString(); }
 
   async function previewData() {
     ipPreview.value = "Detectando...";
-    const ip = await obtenerIPPublica();
-    ipPreview.value = ip || "No disponible";
+    ipPreview.value = (await obtenerIPPublica()) || "No disponible";
     tsPreview.value = nowISO();
+  }
+
+  // --- util: validar URL del webhook ---
+  function validarWebhookUrl(url) {
+    if (!url) return { ok: false, msg: "https://david3028.app.n8n.cloud/webhook/operacion-ai" };
+    if (!/^https?:\/\//i.test(url)) return { ok: false, msg: "La URL debe iniciar con https://." };
+    if (url.includes("/webhook-test/"))
+      return { ok: false, msg: "Esa es la Test URL; usa la Production URL (…/webhook/operacion-ai)." };
+    if (!url.includes("/webhook/"))
+      return { ok: false, msg: "Debes usar la Production URL (que contiene /webhook/)." };
+    return { ok: true };
+  }
+
+  // --- util: POST con timeout y parse seguro ---
+  async function postJSON(url, payload, timeoutMs = 15000) {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), timeoutMs);
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: ctrl.signal
+    }).finally(() => clearTimeout(t));
+
+    const text = await resp.text();
+    let data; try { data = JSON.parse(text); } catch { data = { raw: text }; }
+    return { ok: resp.ok, status: resp.status, data };
   }
 
   // Validación Bootstrap
   (function enableValidation() {
     form.addEventListener("submit", function (event) {
-      if (!form.checkValidity()) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
+      if (!form.checkValidity()) { event.preventDefault(); event.stopPropagation(); }
       form.classList.add("was-validated");
     }, false);
   })();
@@ -48,20 +64,14 @@
   // Probar webhook (sin enviar instrucción)
   btnProbar.addEventListener("click", async () => {
     const webhookUrl = document.getElementById("webhookUrl").value.trim();
-    if (!webhookUrl) {
-      showToast("Pega primero la URL del Webhook.");
-      return;
-    }
+    const v = validarWebhookUrl(webhookUrl);
+    if (!v.ok) { showToast(v.msg); return; }
+
     showToast("Probar Webhook: realizando POST de prueba…");
     try {
-      const resp = await fetch(webhookUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ping: true, ts: nowISO() })
-      });
-      const json = await resp.json().catch(() => ({}));
-      respuestaEl.textContent = JSON.stringify(json, null, 2);
-      showToast(`Webhook respondió (${resp.status}).`);
+      const res = await postJSON(webhookUrl, { ping: true, ts: nowISO() });
+      respuestaEl.textContent = JSON.stringify(res, null, 2);
+      showToast(`Webhook respondió (${res.status}).`);
     } catch (e) {
       respuestaEl.textContent = String(e);
       showToast("Error al probar el Webhook.");
@@ -82,21 +92,15 @@
     const instruccion = document.getElementById("instruccion").value.trim();
     const webhookUrl = document.getElementById("webhookUrl").value.trim();
 
+    const v = validarWebhookUrl(webhookUrl);
+    if (!v.ok) { showToast(v.msg); return; }
+
     showToast("Enviando datos a n8n…");
     try {
-      const resp = await fetch(webhookUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          instruccion,
-          ip_publica: ip,
-          ts: tsPreview.value
-        })
-      });
-
-      const json = await resp.json().catch(() => ({}));
-      respuestaEl.textContent = JSON.stringify(json, null, 2);
-      showToast(`Listo. Estatus ${resp.status}.`);
+      const payload = { instruccion, ip_publica: ip, ts: tsPreview.value };
+      const res = await postJSON(webhookUrl, payload);
+      respuestaEl.textContent = JSON.stringify(res, null, 2);
+      showToast(`Listo. Estatus ${res.status}.`);
     } catch (err) {
       respuestaEl.textContent = String(err);
       showToast("Error al llamar al Webhook.");
