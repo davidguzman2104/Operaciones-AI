@@ -28,14 +28,13 @@
 
   // --- util: validar URL del webhook ---
   function validarWebhookUrl(url) {
-    if (!url) return { ok: false, msg: "https://david3028.app.n8n.cloud/webhook/operacion-ai" };
-    if (!/^https?:\/\//i.test(url)) return { ok: false, msg: "La URL debe iniciar con https://." };
-    if (url.includes("/webhook-test/"))
-      return { ok: false, msg: "Esa es la Test URL; usa la Production URL (…/webhook/operacion-ai)." };
-    if (!url.includes("/webhook/"))
-      return { ok: false, msg: "Debes usar la Production URL (que contiene /webhook/)." };
-    return { ok: true };
-  }
+  if (!url) return { ok: false, msg: "https://david3028.app.n8n.cloud/webhook-test/operacion-ai" };
+  if (!/^https?:\/\//i.test(url)) return { ok: false, msg: "La URL debe iniciar con https://." };
+  // ✅ Permitir test y prod
+  if (!url.includes("/webhook-test/") && !url.includes("/webhook/"))
+    return { ok: false, msg: "Usa la URL de test o la de producción." };
+  return { ok: true };
+}
 
   // --- util: POST con timeout y parse seguro ---
   async function postJSON(url, payload, timeoutMs = 15000) {
