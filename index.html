@@ -5,16 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Operaciones AI · n8n + OpenAI</title>
 
-    <!-- Bootstrap CSS -->
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-    <!-- Bootstrap Icons -->
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
-      rel="stylesheet"
-    />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
   </head>
   <body>
     <!-- NAVBAR -->
@@ -88,31 +80,19 @@
                   <textarea id="instruccion" class="form-control" rows="3" placeholder="Ej.: suma 23 y 12" required></textarea>
                   <div class="invalid-feedback">Escribe una instrucción.</div>
                 </div>
-                <div class="row g-3">
-               <div class="col-md-6">
-            <label for="operandoA" class="form-label">Operando A (opcional)</label>
-            <input id="operandoA" type="number" step="any" class="form-control" placeholder="Ej.: 45" />
-            </div>
-            <div class="col-md-6">
-            <label for="operandoB" class="form-label">Operando B (opcional)</label>
-            <input id="operandoB" type="number" step="any" class="form-control" placeholder="Ej.: 15" />
-            </div>
-                </div>
 
-                <div class="mb-3">
-                  <label for="webhookUrl" class="form-label">URL del Webhook n8n</label>
-                  <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
-                    <input type="url" id="webhookUrl" class="form-control" placeholder="https://david3028.app.n8n.cloud/webhook-test/operacion-ai" required />
-                    <button class="btn btn-outline-secondary" type="button" id="btnProbar">
-                      <i class="bi bi-lightning-charge"></i>
-                    </button>
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label for="operandoA" class="form-label">Operando A (opcional)</label>
+                    <input id="operandoA" type="number" step="any" class="form-control" placeholder="Ej.: 45" />
                   </div>
-                  <div class="form-text">Usa la URL de producción del Webhook.</div>
-                  <div class="invalid-feedback">Pega la URL del Webhook.</div>
+                  <div class="col-md-6">
+                    <label for="operandoB" class="form-label">Operando B (opcional)</label>
+                    <input id="operandoB" type="number" step="any" class="form-control" placeholder="Ej.: 20" />
+                  </div>
                 </div>
 
-                <div class="row g-3">
+                <div class="row g-3 mt-1">
                   <div class="col-md-6">
                     <label class="form-label">IP Pública (auto)</label>
                     <input id="ipPreview" class="form-control" placeholder="Detectando..." disabled />
@@ -135,11 +115,26 @@
             </div>
           </div>
 
+          <!-- RESULTADO BONITO -->
           <div class="card mt-4 shadow-sm border-0">
             <div class="card-header bg-white">
               <div class="d-flex align-items-center">
-                <i class="bi bi-terminal me-2 text-success"></i>
-                <span class="fw-semibold">Respuesta del Webhook</span>
+                <i class="bi bi-check2-circle me-2 text-success"></i>
+                <span class="fw-semibold">Resultado</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <h3 id="resultadoBonito" class="fw-bold mb-2 text-success">—</h3>
+              <div class="small text-body-secondary" id="detalleOperacion">Esperando datos…</div>
+            </div>
+          </div>
+
+          <!-- JSON crudo -->
+          <div class="card mt-4 shadow-sm border-0">
+            <div class="card-header bg-white">
+              <div class="d-flex align-items-center">
+                <i class="bi bi-terminal me-2 text-secondary"></i>
+                <span class="fw-semibold">Respuesta del Webhook (JSON)</span>
               </div>
             </div>
             <div class="card-body">
@@ -162,8 +157,12 @@
                 <li>En n8n, habilita el <strong>Webhook (POST)</strong>.</li>
                 <li>Agrega nodo <strong>OpenAI</strong> para parsear y calcular.</li>
                 <li>Agrega nodo <strong>Google Sheets → Append</strong>.</li>
-                <li>Verifica datos en la hoja: IP, A, B, operación, resultado, timestamp.</li>
+                <li>Haz que el Webhook <strong>responda con el JSON</strong> (ver nota abajo).</li>
               </ol>
+              <hr>
+              <p class="small text-body-secondary mb-0">
+                <strong>Nota:</strong> Para que el resultado se vea aquí, el Webhook debe responder con un JSON que incluya <code>resultado</code>.
+              </p>
             </div>
           </div>
         </div>
@@ -196,9 +195,8 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body">
-            <p>1) Copia la URL del Webhook de n8n (producción) y pégala en el campo.</p>
-            <p>2) Escribe una instrucción como “56 - 23 + 12”.</p>
-            <p>3) Envía; verás el JSON de respuesta y tus datos quedarán en Google Sheets.</p>
+            <p>1) Escribe una instrucción como “56 - 23 + 12”.</p>
+            <p>2) Envía; verás el resultado y el JSON de respuesta.</p>
             <p class="mb-0">La IP pública se obtiene desde <code>api.ipify.org</code>.</p>
           </div>
           <div class="modal-footer">
@@ -208,8 +206,7 @@
       </div>
     </div>
 
-    <!-- Bootstrap JS + App -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="./app.js"></script>
+    <script src="app.js"></script>
   </body>
 </html>
