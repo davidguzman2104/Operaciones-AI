@@ -49,23 +49,6 @@
     }, false);
   })();
 
-  // --- Si el botón Probar ya no existe, evita error ---
-  const btnProbar = document.getElementById("btnProbar");
-  if (btnProbar) {
-    btnProbar.addEventListener("click", async () => {
-      const webhookUrl = "https://davidtuzo4854.app.n8n.cloud/webhook-test/operacion-ai";
-      showToast("Probar Webhook: realizando POST de prueba…");
-      try {
-        const res = await postJSON(webhookUrl, { ping: true, ts: nowISO() });
-        respuestaEl.textContent = JSON.stringify(res, null, 2);
-        showToast(`Webhook respondió (${res.status}).`);
-      } catch (e) {
-        respuestaEl.textContent = String(e);
-        showToast("Error al probar el Webhook.");
-      }
-    });
-  }
-
   // --- Enviar instrucción principal ---
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -99,26 +82,28 @@
       const res = await postJSON(WEBHOOK_URL, payload);
       respuestaEl.textContent = JSON.stringify(res, null, 2);
 
-      // --- Mostrar resultado si viene ---
-      let resultado = null;
+      // --- 🔽 NUEVA LÓGICA PARA MOSTRAR RESULTADO ---
+      let resultText = null;
+
+      // 1. Caso ideal: viene resultado limpio
       if (res?.data?.resultado !== undefined) {
-        resultado = res.data.resultado;
-      } else if (res?.data?.data?.resultado !== undefined) {
-        resultado = res.data.data.resultado;
-      } else if (res?.data?.json?.resultado !== undefined) {
-        resultado = res.data.json.resultado;
+        resultText = res.data.resultado;
+
+      // 2. Caso OpenAI devolvió texto plano
+      } else if (res?.data?.text) {
+        resultText = res.data.text;
+
+      // 3. Caso flujo solo responde "Workflow was started"
+      } else if (res?.data?.data?.message) {
+        resultText = "Esperando resultado de n8n…";
+
+      // 4. Si nada coincide, intenta mostrar contenido crudo
+      } else if (res?.data?.raw) {
+        resultText = res.data.raw;
       }
 
-      if (resultado !== null) {
-        let resultBox = document.getElementById("resultadoBox");
-        if (!resultBox) {
-          resultBox = document.createElement("div");
-          resultBox.id = "resultadoBox";
-          resultBox.className = "alert alert-success mt-3 fw-bold";
-          respuestaEl.parentNode.insertBefore(resultBox, respuestaEl);
-        }
-        resultBox.textContent = `Resultado de la operación: ${resultado}`;
-      }
+      // Mostrar el texto (resultado numérico o frase)
+      document.getElementById("resultadoBonito").textContent = resultText || "—";
 
       showToast(`Listo. Estatus ${res.status}.`);
     } catch (err) {
@@ -130,4 +115,3 @@
   // Init
   previewData();
 })();
-
