@@ -53,7 +53,7 @@
   const btnProbar = document.getElementById("btnProbar");
   if (btnProbar) {
     btnProbar.addEventListener("click", async () => {
-      const webhookUrl = "https://david3028.app.n8n.cloud/webhook-test/operacion-ai";
+      const webhookUrl = "https://davidtuzo4854.app.n8n.cloud/webhook-test/operacion-ai";
       showToast("Probar Webhook: realizando POST de prueba…");
       try {
         const res = await postJSON(webhookUrl, { ping: true, ts: nowISO() });
@@ -78,7 +78,7 @@
     tsPreview.value = nowISO();
 
     const instruccion = document.getElementById("instruccion").value.trim();
-    const WEBHOOK_URL = "https://david3028.app.n8n.cloud/webhook-test/operacion-ai";
+    const WEBHOOK_URL = "https://davidtuzo4854.app.n8n.cloud/webhook-test/operacion-ai";
 
     // Leer A y B (si se llenaron)
     const aStr = document.getElementById("operandoA").value.trim();
@@ -130,3 +130,4 @@
   // Init
   previewData();
 })();
+
